@@ -212,6 +212,32 @@ def auth(ctx, args):
     raise CommandError("WRONGPASS invalid username-password pair or user is disabled.")
 
 
+@command("hello", -1)
+def hello(ctx, args):
+    """Handshake. minidis speaks RESP2 only, so HELLO 3 is refused the way Redis refuses
+    a version it does not know; clients can then connect with protocol 2."""
+    if args and args[0] != b"2":
+        detail = " (minidis speaks RESP2 only)" if args[0] == b"3" else ""
+        raise CommandError("NOPROTO sorry, this protocol version is not supported" + detail)
+    i = 1
+    while i < len(args):
+        opt = args[i].upper()
+        if opt == b"AUTH" and i + 2 < len(args):
+            auth(ctx, [args[i + 1], args[i + 2]])
+            i += 3
+        elif opt == b"SETNAME" and i + 1 < len(args):
+            ctx.session.name = args[i + 1] or None
+            i += 2
+        else:
+            raise CommandError(SYNTAX)
+    if ctx.server.password is not None and not ctx.session.authenticated:
+        raise CommandError("NOAUTH HELLO must be called with the client already authenticated, "
+                           "otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate "
+                           "the client and select the RESP protocol version at the same time")
+    return [b"server", b"redis", b"version", b"7.0.0", b"proto", 2, b"id", ctx.session.id,
+            b"mode", b"standalone", b"role", b"master", b"modules", []]
+
+
 @command("select", 2)
 def select(ctx, args):
     if to_int(args[0]) != 0:
