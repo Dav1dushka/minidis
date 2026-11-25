@@ -48,7 +48,7 @@ It listens on `127.0.0.1` by default. To accept other machines, set a password f
 | Lists | `LPUSH` `RPUSH` `LPOP` `RPOP` `LLEN` `LRANGE` |
 | Hashes | `HSET` `HGET` `HDEL` `HGETALL` `HLEN` `HEXISTS` `HINCRBY` |
 | Sets | `SADD` `SREM` `SMEMBERS` `SISMEMBER` `SCARD` |
-| Server | `PING` `ECHO` `AUTH` `INFO` `SELECT 0` `CLIENT` `BGREWRITEAOF` `QUIT` |
+| Server | `PING` `ECHO` `AUTH` `HELLO 2` `INFO` `SELECT 0` `CLIENT` `BGREWRITEAOF` `QUIT` |
 
 Error messages match Redis word for word, so client libraries raise the right exceptions.
 
@@ -92,7 +92,7 @@ About 5 times slower than Redis for ordinary traffic and 8 times slower when pip
 
 ```bash
 pip install pytest
-pytest -q                # 63 tests: protocol, commands, expiry, AOF, real sockets
+pytest -q                # 65 tests: protocol, commands, expiry, AOF, real sockets
 bash scripts/smoke.sh    # end to end with the real redis-cli (needs redis-tools)
 ```
 
@@ -101,6 +101,8 @@ The server tests start minidis on a random port and talk to it over TCP: pipelin
 ## Not implemented
 
 Transactions (`MULTI`/`EXEC`), pub/sub, blocking commands (`BLPOP`), sorted sets, streams, replication, RESP3, multiple databases, eviction under memory pressure. Some of these are good next steps.
+
+Because RESP3 is missing, `HELLO 3` is answered with `NOPROTO`, as an older Redis would. Recent redis-py versions ask for RESP3 by default, so connect with `redis.Redis(..., protocol=2)`.
 
 ## License
 
@@ -141,7 +143,7 @@ minidis --port 6380 --aof data.aof --fsync everysec
 | Списки | `LPUSH` `RPUSH` `LPOP` `RPOP` `LLEN` `LRANGE` |
 | Хеши | `HSET` `HGET` `HDEL` `HGETALL` `HLEN` `HEXISTS` `HINCRBY` |
 | Множества | `SADD` `SREM` `SMEMBERS` `SISMEMBER` `SCARD` |
-| Сервер | `PING` `ECHO` `AUTH` `INFO` `SELECT 0` `CLIENT` `BGREWRITEAOF` `QUIT` |
+| Сервер | `PING` `ECHO` `AUTH` `HELLO 2` `INFO` `SELECT 0` `CLIENT` `BGREWRITEAOF` `QUIT` |
 
 Тексты ошибок совпадают с Redis слово в слово, поэтому клиентские библиотеки выбрасывают правильные исключения.
 
@@ -170,7 +172,7 @@ minidis --port 6380 --aof data.aof --fsync everysec
 
 ```bash
 pip install pytest
-pytest -q                # 63 теста: протокол, команды, истечение, AOF, настоящие сокеты
+pytest -q                # 65 тестов: протокол, команды, истечение, AOF, настоящие сокеты
 bash scripts/smoke.sh    # сквозная проверка настоящим redis-cli (нужен redis-tools)
 ```
 
@@ -179,6 +181,8 @@ bash scripts/smoke.sh    # сквозная проверка настоящим 
 ## Что не реализовано
 
 Транзакции (`MULTI`/`EXEC`), pub/sub, блокирующие команды (`BLPOP`), sorted sets, streams, репликация, RESP3, несколько баз, вытеснение при нехватке памяти. Некоторые из них — хорошие следующие шаги.
+
+Поскольку RESP3 нет, на `HELLO 3` приходит ответ `NOPROTO`, как от старого Redis. Свежие версии redis-py по умолчанию просят RESP3, поэтому подключайся через `redis.Redis(..., protocol=2)`.
 
 ## Лицензия
 
