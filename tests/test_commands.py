@@ -215,3 +215,20 @@ def test_auth_required_when_password_set(run):
     assert is_error(run("AUTH", "admin", "s3cret-pass"), "WRONGPASS")
     assert run("AUTH", "s3cret-pass") == "OK"
     assert run("GET", "k") is None
+
+
+def test_hello_handshake(run):
+    reply = run("HELLO", "2", "SETNAME", "worker")
+    assert dict(zip(reply[::2], reply[1::2], strict=True))[b"proto"] == 2
+    assert run("CLIENT", "GETNAME") == b"worker"
+    assert is_error(run("HELLO", "3"), "NOPROTO")      # RESP3 is not implemented
+    assert is_error(run("HELLO", "9"), "NOPROTO")
+
+
+def test_hello_can_authenticate(run):
+    run.ctx.server.password = b"pw-1234567"
+    run.ctx.session.authenticated = False
+    assert is_error(run("HELLO", "2"), "NOAUTH")
+    assert is_error(run("HELLO", "2", "AUTH", "default", "nope"), "WRONGPASS")
+    assert run("HELLO", "2", "AUTH", "default", "pw-1234567")[0] == b"server"
+    assert run("GET", "k") is None

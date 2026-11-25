@@ -5,7 +5,8 @@ redis = pytest.importorskip("redis")
 
 
 def test_redis_py_talks_to_minidis(server):
-    r = redis.Redis(host=server.host, port=server.port, decode_responses=True)
+    # protocol=2: minidis implements RESP2 only, and recent redis-py versions ask for RESP3 by default.
+    r = redis.Redis(host=server.host, port=server.port, protocol=2, decode_responses=True)
     assert r.ping() is True
     assert r.set("greeting", "hello", ex=30) is True
     assert r.get("greeting") == "hello"
